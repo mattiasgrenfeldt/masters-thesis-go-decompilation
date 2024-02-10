@@ -1,0 +1,11 @@
+build
+bin
+dist
+*.class
+*.pyc
+.settings
+.project
+.gradle
+.classpath
+.antProperties.xml
+.DS_Store
