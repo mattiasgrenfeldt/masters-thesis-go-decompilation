@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package extension;
+
+/* This file is forked from Ghidra. */
+package eval_extension;
 
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import org.apache.commons.lang3.StringUtils;
@@ -129,6 +132,79 @@ public class DataTypeWriter {
         return "/* " + text + " */";
     }
 
+    public static String[] RESERVED_IDENTIFIERS_VALUES = new String[]{
+            "auto",
+            "break",
+            "case",
+            "char",
+            "code",
+            "const",
+            "continue",
+            "default",
+            "do",
+            "double",
+            "else",
+            "enum",
+            "extern",
+            "float",
+            "for",
+            "goto",
+            "if",
+            "inline",
+            "int",
+            "long",
+            "register",
+            "restrict",
+            "return",
+            "short",
+            "signed",
+            "sizeof",
+            "static",
+            "struct",
+            "switch",
+            "typedef",
+            "union",
+            "unix",
+            "unsigned",
+            "void",
+            "volatile",
+            "while",
+    };
+    public static HashSet<String> RESERVED_IDENTIFIERS = new HashSet<>(Arrays.asList(RESERVED_IDENTIFIERS_VALUES));
+
+    public static String safeIdentifier(String ident){
+        if (RESERVED_IDENTIFIERS.contains(ident)){
+            return "_" + ident;
+        }
+        return ident;
+    }
+
+    // This function is added.
+    public static String cleanIdentifier(String ident) {
+        if (ident == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < ident.length(); i++) {
+            char c = ident.charAt(i);
+            if (StringUtilities.isValidCLanguageChar(c)) {
+                sb.append(c);
+            } else {
+                sb.append('_');
+            }
+        }
+        return sb.toString();
+    }
+
+    private String cleanPointerName(DataType dt) {
+        StringBuilder sb = new StringBuilder();
+        while (dt instanceof Pointer pointer && pointer.getDataType() != null) {
+            sb.append('*');
+            dt = pointer.getDataType();
+        }
+        return cleanIdentifier(dt.getDisplayName()) + sb.toString();
+    }
+
     /**
      * Converts all data types in the data type manager into ANSI-C code.
      *
@@ -235,7 +311,11 @@ public class DataTypeWriter {
         if (dt == null) {
             return;
         }
-        if (dt instanceof FunctionDefinition) {
+        if (dt instanceof FunctionDefinition fd) {
+            // This if-statement is modified.
+            writer.write("typedef void " + cleanIdentifier(fd.getName()) + ";");
+            writer.write(EOL);
+            writer.write(EOL);
             return;
         }
         if (dt instanceof FactoryDataType) {
@@ -348,7 +428,7 @@ public class DataTypeWriter {
     private boolean containsComposite(Composite container, Composite contained) {
         for (DataTypeComponent component : container.getDefinedComponents()) {
             DataType dt = getBaseArrayTypedefType(component.getDataType());
-            if (dt instanceof Composite && dt.getName().equals(contained.getName()) &&
+            if (dt instanceof Composite && cleanIdentifier(dt.getName()).equals(cleanIdentifier(contained.getName())) &&
                     dt.isEquivalent(contained)) {
                 return true;
             }
@@ -413,7 +493,7 @@ public class DataTypeWriter {
                                     replacementBaseType.getClass().getSimpleName());
                 } else {
                     int elementCnt = (length + elementLen - 1) / elementLen;
-                    return replacementBaseType.getDisplayName() + " " + fieldName + "[" +
+                    return cleanIdentifier(replacementBaseType.getDisplayName()) + " " + fieldName + "[" +
                             elementCnt + "]";
                 }
             }
@@ -427,8 +507,8 @@ public class DataTypeWriter {
         String compositeType = composite instanceof Structure ? "struct" : "union";
 
         // output original name as a typedef
-        writer.write("typedef " + compositeType + " " + composite.getDisplayName() + " " +
-                composite.getDisplayName() + ", *P" + composite.getDisplayName() + ";");
+        writer.write("typedef " + compositeType + " " + cleanIdentifier(composite.getDisplayName()) + " " +
+                cleanIdentifier(composite.getDisplayName()) + ", *P" + cleanIdentifier(composite.getDisplayName()) + ";");
         writer.write(EOL);
         writer.write(EOL);
 
@@ -451,7 +531,7 @@ public class DataTypeWriter {
         String compositeType = composite instanceof Structure ? "struct" : "union";
 
         StringBuilder sb = new StringBuilder();
-        sb.append(compositeType + " " + composite.getDisplayName() + " {");
+        sb.append(compositeType + " " + cleanIdentifier(composite.getDisplayName()) + " {");
 
         String descrip = composite.getDescription();
         if (descrip != null && descrip.length() > 0) {
@@ -477,7 +557,7 @@ public class DataTypeWriter {
         sb.append("    ");
         sb.append(annotator.getPrefix(composite, component));
 
-        String fieldName = component.getFieldName();
+        String fieldName = safeIdentifier(cleanIdentifier(component.getFieldName()));
         if (fieldName == null || fieldName.length() == 0) {
             fieldName = component.getDefaultFieldName();
         }
@@ -499,7 +579,6 @@ public class DataTypeWriter {
 
     private String getTypeDeclaration(String name, DataType dataType, int instanceLength,
                                       boolean writeEnabled, TaskMonitor monitor) throws IOException, CancelledException {
-
         if (name == null) {
             name = "";
         }
@@ -512,21 +591,36 @@ public class DataTypeWriter {
                 sb.append(componentString);
             } else {
                 sb.append(comment(
-                        "ignoring dynamic datatype inside composite: " + dataType.getDisplayName()));
+                        "ignoring dynamic datatype inside composite: " + cleanIdentifier(dataType.getDisplayName())));
                 sb.append(EOL);
             }
         }
 
         if (componentString == null) {
-
             if (dataType instanceof BitFieldDataType) {
                 BitFieldDataType bfDt = (BitFieldDataType) dataType;
                 name += ":" + bfDt.getDeclaredBitSize();
                 dataType = bfDt.getBaseDataType();
-            } else if (dataType instanceof Array) {
-                Array array = (Array) dataType;
-                name += getArrayDimensions(array);
-                dataType = getArrayBaseType(array);
+            }
+
+            while (true) {
+                if (dataType instanceof Array array) {
+                    name += "[" + array.getNumElements() + "]";
+                    dataType = array.getDataType();
+                } else if (dataType instanceof Pointer pointer) {
+                    DataType elem = pointer.getDataType();
+                    if (elem == null) {
+                        break;
+                    }
+                    name = "*" + name;
+                    dataType = elem;
+                    if (dataType instanceof Array) {
+                        // TODO: Do something about string concatenation in a loop? Any better way to write this?
+                        name = "(" + name + ")";
+                    }
+                } else {
+                    break;
+                }
             }
 
             DataType baseDataType = getBaseDataType(dataType);
@@ -534,7 +628,7 @@ public class DataTypeWriter {
                 componentString = getFunctionPointerString((FunctionDefinition) baseDataType, name,
                         dataType, writeEnabled, monitor);
             } else {
-                componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
+                componentString = getDataTypePrefix(dataType) + cleanIdentifier(dataType.getDisplayName());
                 if (name.length() != 0) {
                     componentString += " " + name;
                 }
@@ -558,7 +652,7 @@ public class DataTypeWriter {
 
     private void writeEnum(Enum enumm, TaskMonitor monitor) throws IOException {
 
-        String enumName = enumm.getDisplayName();
+        String enumName = cleanIdentifier(enumm.getDisplayName());
         if (enumName.startsWith("define_") && enumName.length() > 7 && enumm.getCount() == 1 &&
                 enumm.getLength() == 8) {
             long val = enumm.getValues()[0];
@@ -607,9 +701,9 @@ public class DataTypeWriter {
      */
     private void writeTypeDef(TypeDef typeDef, TaskMonitor monitor)
             throws IOException, CancelledException {
-        String typedefName = typeDef.getDisplayName();
+        String typedefName = cleanIdentifier(typeDef.getDisplayName());
         DataType dataType = typeDef.getDataType();
-        String dataTypeName = dataType.getDisplayName();
+        String dataTypeName = cleanIdentifier(dataType.getDisplayName());
         if (isIntegral(typedefName, dataTypeName)) {
             return;
         }
@@ -618,7 +712,7 @@ public class DataTypeWriter {
         try {
             if (baseType instanceof Composite || baseType instanceof Enum) {
                 // auto-typedef generated with composite and enum
-                if (typedefName.equals(baseType.getName())) {
+                if (typedefName.equals(cleanIdentifier(baseType.getName()))) {
                     resolvedTypeMap.remove(typedefName);
                     return;
                 }
@@ -629,7 +723,7 @@ public class DataTypeWriter {
                 if (dt instanceof TypeDef) {
                     dt = ((TypeDef) dt).getBaseDataType();
                 }
-                if (dt instanceof Composite && dt.getName().equals(typedefName.substring(1))) {
+                if (dt instanceof Composite && cleanIdentifier(dt.getName()).equals(typedefName.substring(1))) {
                     // auto-pointer-typedef generated with composite
                     resolvedTypeMap.remove(typedefName);
                     return;
@@ -815,7 +909,7 @@ public class DataTypeWriter {
         if (!(functionPointerArrayType instanceof FunctionDefinition)) {
             writer.append(
                     comment("Attempting output of invalid function pointer type declaration: " +
-                            originalType.getDisplayName()));
+                            cleanIdentifier(originalType.getDisplayName())));
         }
         if (name != null) {
             sb.append(name);
@@ -832,7 +926,7 @@ public class DataTypeWriter {
             return getFunctionPointerString((FunctionDefinition) baseReturnType, sb.toString(),
                     returnType, writeEnabled, monitor);
         }
-        return returnType.getDisplayName() + " " + sb.toString();
+        return cleanPointerName(returnType) + " " + sb.toString();
     }
 
     private String getParameterListString(FunctionDefinition fd, boolean includeParamNames,
@@ -844,7 +938,7 @@ public class DataTypeWriter {
         int n = parameters.length;
         for (int i = 0; i < n; i++) {
             ParameterDefinition param = parameters[i];
-            String paramName = includeParamNames ? param.getName() : null;
+            String paramName = includeParamNames ? cleanIdentifier(param.getName()) : null;
 
             DataType dataType = param.getDataType();
             if (writeEnabled) {

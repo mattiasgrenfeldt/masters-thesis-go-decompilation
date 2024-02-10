@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-/* This file is forked from Ghidra without modification except for that it uses the forked version of DataTypeWriter */
-package extension.forked;
+/* This file is forked from Ghidra. */
+package eval_extension;
 
 import generic.cache.CachingPool;
 import generic.cache.CountingBasicFactory;
@@ -78,7 +78,7 @@ public class CppExporter extends Exporter {
     private boolean userSuppliedOptions = false;
 
     public CppExporter() {
-        super("C/C++", "c", new HelpLocation("ExporterPlugin", "c_cpp"));
+        super("Go forked C/C++", "c", new HelpLocation("ExporterPlugin", "c_cpp"));
     }
 
     public CppExporter(DecompileOptions options) {
@@ -87,11 +87,12 @@ public class CppExporter extends Exporter {
         this.userSuppliedOptions = true;
     }
 
-    public CppExporter(boolean createHeader, boolean createFile, boolean emitTypes,
+    public CppExporter(boolean createHeader, boolean createFile, boolean useCppStyleComments, boolean emitTypes,
                        boolean excludeTags, String tags) {
         this();
         isCreateHeaderFile = createHeader;
         isCreateCFile = createFile;
+        isUseCppStyleComments = useCppStyleComments;
         emitDataTypeDefinitions = emitTypes;
         excludeMatchingTags = excludeTags;
         if (tags != null) {
@@ -310,6 +311,8 @@ public class CppExporter extends Exporter {
             DataTypeManager dtm = program.getDataTypeManager();
             DataTypeWriter dataTypeWriter =
                     new DataTypeWriter(dtm, cFileWriter, isUseCppStyleComments);
+            // The below line is added in comparison with the standard version of this file in Ghidra.
+            cFileWriter.write(getFakeCTypeDefinitions(dtm.getDataOrganization()));
             dataTypeWriter.write(dtm, monitor);
         }
 
@@ -525,7 +528,7 @@ public class CppExporter extends Exporter {
             monitor.setMessage("Decompiling " + function.getName());
 
             DecompileResults dr =
-                    decompiler.decompileFunction(function, options.getDefaultTimeout(), monitor);
+                    decompiler.decompileFunction(function, 300, monitor);
             String errorMessage = dr.getErrorMessage();
             if (!"".equals(errorMessage)) {
                 Msg.warn(CppExporter.this, "Error decompiling: " + errorMessage);
