@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+   <language processor="x86"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.0"
+            slafile="x86-64.sla"
+            processorspec="x86-64.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:64:golang-1.19.5">
+    <description>Go Language Module</description>
+    <compiler name="go1.19.5" spec="golang1.19.5.cspec" id="default"/>
+  </language> 
+</language_definitions>

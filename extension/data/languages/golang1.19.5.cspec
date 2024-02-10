@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- https://go.dev/s/regabi -->
+
+<compiler_spec>
+  <data_organization>
+     <absolute_max_alignment value="0" />
+     <!-- TODO: Not sure what machine alignment should be -->
+     <machine_alignment value="2" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="8" />
+     <pointer_size value="8" />
+     <wchar_size value="4" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="8" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <!-- No long doubles in Go -->
+     <long_double_size value="16" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="8" />
+     </size_alignment_map>
+  </data_organization>
+
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="RSP" space="ram"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="8"/>
+  </returnaddress>
+  <default_proto>
+    <!-- TODO: check that extrapop and stackshift is correct -->
+    <prototype name="go-abiinternal" extrapop="8" stackshift="8">
+      <input>
+        <!-- TODO: Floating point arguments -->
+
+        <!-- Current goroutine pointer -->
+        <pentry minsize="1" maxsize="8">
+          <register name="R14"/>
+        </pentry>
+
+        <!-- 8 byte arguments -->
+        <pentry minsize="1" maxsize="8">
+          <register name="RAX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="RBX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="RCX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="RDI"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="RSI"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R11"/>
+        </pentry>
+
+        <!-- 16 byte arguments -->
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="RBX" piece2="RAX"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="RCX" piece2="RBX"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="RDI" piece2="RCX"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="RSI" piece2="RDI"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="R8" piece2="RSI"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="R9" piece2="R8"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="R10" piece2="R9"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="R11" piece2="R10"/>
+        </pentry>
+
+        <!-- 24 byte arguments -->
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="RCX" piece2="RBX" piece3="RAX"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="RDI" piece2="RCX" piece3="RBX"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="RSI" piece2="RDI" piece3="RCX"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="R8" piece2="RSI" piece3="RDI"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="R9" piece2="R8" piece3="RSI"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="R10" piece2="R9" piece3="R8"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="R11" piece2="R10" piece3="R9"/>
+        </pentry>
+
+        <!-- 32 byte arguments -->
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="RDI" piece2="RCX" piece3="RBX" piece4="RAX"/>
+        </pentry>
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="RSI" piece2="RDI" piece3="RCX" piece4="RBX"/>
+        </pentry>
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="R8" piece2="RSI" piece3="RDI" piece4="RCX"/>
+        </pentry>
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="R9" piece2="R8" piece3="RSI" piece4="RDI"/>
+        </pentry>
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="R10" piece2="R9" piece3="R8" piece4="RSI"/>
+        </pentry>
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="R11" piece2="R10" piece3="R9" piece4="R8"/>
+        </pentry>
+      </input>
+      <output>
+        <!-- TODO: Floating point results -->
+        
+        <pentry minsize="1" maxsize="8">
+          <register name="RAX"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="RBX" piece2="RAX"/>
+        </pentry>
+        <pentry minsize="17" maxsize="24">
+          <addr space="join" piece1="RCX" piece2="RBX" piece3="RAX"/>
+        </pentry>
+        <pentry minsize="25" maxsize="32">
+          <addr space="join" piece1="RDI" piece2="RCX" piece3="RBX" piece4="RAX"/>
+        </pentry>
+      </output>
+      <killedbycall>
+        <register name="RAX"/>
+        <register name="RBX"/>
+        <register name="RCX"/>
+        <register name="RDI"/>
+        <register name="RSI"/>
+        <register name="R8"/>
+        <register name="R9"/>
+        <register name="R10"/>
+        <register name="R11"/>
+        <register name="R12"/>
+        <register name="R13"/>
+        <register name="RDX"/> <!-- Closure context pointer -->
+      </killedbycall>
+      <unaffected>
+        <register name="R14"/> <!-- Current goroutine pointer -->
+        <register name="R15"/> <!-- GOT reference temporary. Fixed if dynlink. -->
+        <register name="RSP"/>
+        <register name="RBP"/>
+        <register name="XMM15"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <prototype name="go-abiinternal-closurecall" extrapop="8" stackshift="8">
+    <input>
+      <!-- TODO: Floating point arguments -->
+
+      <!-- Current goroutine pointer -->
+      <pentry minsize="1" maxsize="8">
+        <register name="R14"/>
+      </pentry>
+
+      <!-- Closure context pointer -->
+      <pentry minsize="1" maxsize="8">
+        <register name="RDX"/>
+      </pentry>
+
+      <!-- 8 byte arguments -->
+      <pentry minsize="1" maxsize="8">
+        <register name="RAX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="RBX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="RCX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="RDI"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="RSI"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="R8"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="R9"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="R10"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="R11"/>
+      </pentry>
+
+      <!-- 16 byte arguments -->
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="RBX" piece2="RAX"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="RCX" piece2="RBX"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="RDI" piece2="RCX"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="RSI" piece2="RDI"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="R8" piece2="RSI"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="R9" piece2="R8"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="R10" piece2="R9"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="R11" piece2="R10"/>
+      </pentry>
+
+      <!-- 24 byte arguments -->
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="RCX" piece2="RBX" piece3="RAX"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="RDI" piece2="RCX" piece3="RBX"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="RSI" piece2="RDI" piece3="RCX"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="R8" piece2="RSI" piece3="RDI"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="R9" piece2="R8" piece3="RSI"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="R10" piece2="R9" piece3="R8"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="R11" piece2="R10" piece3="R9"/>
+      </pentry>
+
+      <!-- 32 byte arguments -->
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="RDI" piece2="RCX" piece3="RBX" piece4="RAX"/>
+      </pentry>
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="RSI" piece2="RDI" piece3="RCX" piece4="RBX"/>
+      </pentry>
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="R8" piece2="RSI" piece3="RDI" piece4="RCX"/>
+      </pentry>
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="R9" piece2="R8" piece3="RSI" piece4="RDI"/>
+      </pentry>
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="R10" piece2="R9" piece3="R8" piece4="RSI"/>
+      </pentry>
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="R11" piece2="R10" piece3="R9" piece4="R8"/>
+      </pentry>
+    </input>
+    <output>
+      <!-- TODO: Floating point results -->
+      
+      <pentry minsize="1" maxsize="8">
+        <register name="RAX"/>
+      </pentry>
+      <pentry minsize="9" maxsize="16">
+        <addr space="join" piece1="RBX" piece2="RAX"/>
+      </pentry>
+      <pentry minsize="17" maxsize="24">
+        <addr space="join" piece1="RCX" piece2="RBX" piece3="RAX"/>
+      </pentry>
+      <pentry minsize="25" maxsize="32">
+        <addr space="join" piece1="RDI" piece2="RCX" piece3="RBX" piece4="RAX"/>
+      </pentry>
+    </output>
+    <killedbycall>
+      <register name="RAX"/>
+      <register name="RBX"/>
+      <register name="RCX"/>
+      <register name="RDI"/>
+      <register name="RSI"/>
+      <register name="R8"/>
+      <register name="R9"/>
+      <register name="R10"/>
+      <register name="R11"/>
+      <register name="R12"/>
+      <register name="R13"/>
+      <register name="RDX"/> <!-- Closure context pointer -->
+    </killedbycall>
+    <unaffected>
+      <register name="R14"/> <!-- Current goroutine pointer -->
+      <register name="R15"/> <!-- GOT reference temporary. Fixed if dynlink. -->
+      <register name="RSP"/>
+      <register name="RBP"/>
+      <register name="XMM15"/>
+    </unaffected>
+  </prototype>
+
+  <prototype name="go-duff-zero" extrapop="8" stackshift="8">
+    <input>
+      <pentry minsize="1" maxsize="8">
+        <register name="RDI"/>
+      </pentry>
+    </input>
+    <output>
+      <!-- No output -->
+    </output>
+    <killedbycall>
+      <register name="RDI"/>
+    </killedbycall>
+    <unaffected>
+      <register name="RSP"/>
+      <register name="RBP"/>
+      <register name="RAX"/>
+      <register name="RBX"/>
+      <register name="RCX"/>
+      <register name="RDX"/>
+      <register name="RSI"/>
+      <register name="R8"/>
+      <register name="R9"/>
+      <register name="R10"/>
+      <register name="R11"/>
+      <register name="R12"/>
+      <register name="R13"/>
+      <register name="R14"/>
+      <register name="R15"/>
+      <register name="XMM0"/>
+      <register name="XMM1"/>
+      <register name="XMM2"/>
+      <register name="XMM3"/>
+      <register name="XMM4"/>
+      <register name="XMM5"/>
+      <register name="XMM6"/>
+      <register name="XMM7"/>
+      <register name="XMM8"/>
+      <register name="XMM9"/>
+      <register name="XMM10"/>
+      <register name="XMM11"/>
+      <register name="XMM12"/>
+      <register name="XMM13"/>
+      <register name="XMM14"/>
+      <register name="XMM15"/>
+    </unaffected>
+  </prototype>
+  <prototype name="go-duff-copy" extrapop="8" stackshift="8">
+    <input>
+      <pentry minsize="1" maxsize="8">
+        <register name="RDI"/>
+      </pentry>
+      <pentry minsize="1" maxsize="8">
+        <register name="RSI"/>
+      </pentry>
+    </input>
+    <output>
+      <!-- No output -->
+    </output>
+    <killedbycall>
+      <register name="RDI"/>
+      <register name="RSI"/>
+      <register name="XMM0"/>
+    </killedbycall>
+    <unaffected>
+      <register name="RSP"/>
+      <register name="RBP"/>
+      <register name="RAX"/>
+      <register name="RBX"/>
+      <register name="RCX"/>
+      <register name="RDX"/>
+      <register name="R8"/>
+      <register name="R9"/>
+      <register name="R10"/>
+      <register name="R11"/>
+      <register name="R12"/>
+      <register name="R13"/>
+      <register name="R14"/>
+      <register name="R15"/>
+      <register name="XMM1"/>
+      <register name="XMM2"/>
+      <register name="XMM3"/>
+      <register name="XMM4"/>
+      <register name="XMM5"/>
+      <register name="XMM6"/>
+      <register name="XMM7"/>
+      <register name="XMM8"/>
+      <register name="XMM9"/>
+      <register name="XMM10"/>
+      <register name="XMM11"/>
+      <register name="XMM12"/>
+      <register name="XMM13"/>
+      <register name="XMM14"/>
+      <register name="XMM15"/>
+    </unaffected>
+  </prototype>
+</compiler_spec>
