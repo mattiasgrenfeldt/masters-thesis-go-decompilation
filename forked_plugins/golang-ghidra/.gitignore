@@ -9,3 +9,8 @@ dist
 .classpath
 .antProperties.xml
 .DS_Store
+
+.idea/
+gradle/
+gradlew
+gradlew.bat

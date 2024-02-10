@@ -71,7 +71,7 @@ public class GolangFunctionAnalyzer implements Analyzer {
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		return true;
+		return false;
 	}
 
 	@Override
