@@ -31,3 +31,9 @@ else {
 	throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
 }
 //----------------------END "DO NOT MODIFY" SECTION-------------------------------
+
+// Exclude additional files from the built extension
+buildExtension.exclude '.idea/**'
+buildExtension.exclude 'gradle.properties'
+buildExtension.exclude 'build.sh'
+buildExtension.exclude 'gradle/**'

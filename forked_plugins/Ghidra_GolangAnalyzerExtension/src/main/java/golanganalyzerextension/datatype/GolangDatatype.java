@@ -5,15 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.BooleanDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Float4DataType;
-import ghidra.program.model.data.Float8DataType;
-import ghidra.program.model.data.IntegerDataType;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.StringDataType;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.*;
 import golanganalyzerextension.DatatypeHolder;
 import golanganalyzerextension.exceptions.InvalidBinaryStructureException;
 import golanganalyzerextension.gobinary.GolangBinary;
@@ -141,10 +133,10 @@ public class GolangDatatype {
 		}else if(go_datatype.kind==Kind.Slice) {
 			go_datatype=new SliceGolangDatatype(go_bin, type_base_addr, offset, is_go16);
 		}else if(go_datatype.kind==Kind.String) {
-			StructureDataType string_datatype=new StructureDataType("string", 0);
+			StructureDataType string_datatype=new StructureDataType("gostring", 0);
 			string_datatype.setPackingEnabled(true);
 			string_datatype.setExplicitMinimumAlignment(go_datatype.align);
-			string_datatype.add(new PointerDataType(new StringDataType(), pointer_size), "__data", null);
+			string_datatype.add(new PointerDataType(new CharDataType(), pointer_size), "__data", null);
 			string_datatype.add(new IntegerDataType(), "__length", null);
 			go_datatype=new OtherGolangDatatype(go_bin, type_base_addr, offset, is_go16, string_datatype);
 		}else if(go_datatype.kind==Kind.Struct) {

@@ -1,8 +1,6 @@
 package golanganalyzerextension;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.VoidDataType;
@@ -77,10 +75,21 @@ public class FunctionModifier {
 			Logger.append_message("Failed to setup FunctionModifier");
 			return;
 		}
+		HashSet<String> exists = new HashSet<>();
+		HashSet<String> duplicate = new HashSet<>();
+		if (rename_option) {
+			for(GolangFunction f : gofunc_list) {
+				String name = f.get_func_name().replace(" ", "_");
+				if (exists.contains(name)){
+					duplicate.add(name);
+				}
+				exists.add(name);
+			}
+		}
 
 		for(GolangFunction gofunc: gofunc_list) {
 			if(rename_option) {
-				rename_func(gofunc);
+				rename_func(gofunc, duplicate);
 			}
 			if(param_option) {
 				modify_func_param(gofunc);
@@ -232,9 +241,13 @@ public class FunctionModifier {
 		return true;
 	}
 
-	private void rename_func(GolangFunction gofunc) {
+	private void rename_func(GolangFunction gofunc, HashSet<String> duplicate) {
 		Function func=gofunc.get_func();
 		String func_name=gofunc.get_func_name().replace(" ", "_");
+
+		if (duplicate.contains(func_name)){
+			func_name += String.format("_%s", func.getEntryPoint());
+		}
 
 		if(func.getName().equals(func_name)) {
 			return;

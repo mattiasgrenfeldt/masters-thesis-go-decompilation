@@ -1,6 +1,8 @@
 package golanganalyzerextension.datatype;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
@@ -52,6 +54,53 @@ public class StructGolangDatatype extends GolangDatatype {
 		datatype=structure_datatype;
 	}
 
+	public static String[] RESERVED_IDENTIFIERS_VALUES = new String[]{
+			"auto",
+			"break",
+			"case",
+			"char",
+			"code",
+			"const",
+			"continue",
+			"default",
+			"do",
+			"double",
+			"else",
+			"enum",
+			"extern",
+			"float",
+			"for",
+			"goto",
+			"if",
+			"inline",
+			"int",
+			"long",
+			"register",
+			"restrict",
+			"return",
+			"short",
+			"signed",
+			"sizeof",
+			"static",
+			"struct",
+			"switch",
+			"typedef",
+			"union",
+			"unix",
+			"unsigned",
+			"void",
+			"volatile",
+			"while",
+	};
+	public static HashSet<String> RESERVED_IDENTIFIERS = new HashSet<>(Arrays.asList(RESERVED_IDENTIFIERS_VALUES));
+
+	public static String safeIdentifier(String ident) {
+		if (RESERVED_IDENTIFIERS.contains(ident)) {
+			return "_" + ident;
+		}
+		return ident;
+	}
+
 	@Override
 	void parse_datatype() throws BinaryAccessException {
 		if(is_go16) {
@@ -77,7 +126,7 @@ public class StructGolangDatatype extends GolangDatatype {
 
 			String field_name=get_type_string(go_bin.get_address(type_base_addr, field_name_addr_value-type_base_addr.getOffset()), 0);
 			dependence_type_key_list.add(field_type_key);
-			field_list.add(new StructField(go_bin, field_name, field_type_key, (int)offset_embed));
+			field_list.add(new StructField(go_bin, safeIdentifier(field_name), field_type_key, (int)offset_embed));
 		}
 
 		if(check_tflag(tflag, Tflag.Uncommon)) {

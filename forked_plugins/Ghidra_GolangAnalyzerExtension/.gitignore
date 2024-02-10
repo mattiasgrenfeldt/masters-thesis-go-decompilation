@@ -27,8 +27,12 @@ hs_err_pid*
 /build
 /dist
 /.gradle
-/gradle.properties
 /.settings
 .project
 .classpath
 .antProperties.xml
+
+.idea/
+gradle/
+gradlew
+gradlew.bat
