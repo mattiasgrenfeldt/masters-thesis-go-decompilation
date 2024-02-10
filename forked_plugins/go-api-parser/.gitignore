@@ -1,0 +1,7 @@
+go-api-parser
+api.txt
+out.json
+.*.swp
+tests/main
+__pycache__
+results/*.json
