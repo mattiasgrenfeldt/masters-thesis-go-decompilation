@@ -1,0 +1,6 @@
+project/
+application.log
+script.log
+decompile-*/
+results/
+graphs/

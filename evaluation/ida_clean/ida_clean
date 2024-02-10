@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+import sys, os, re
+
+if len(sys.argv) < 3:
+    print("usage: ida_clean <input> <output>")
+    sys.exit(1)
+path = sys.argv[1]
+
+with open(path) as f:
+    cfile = f.read()
+
+with open(path.rstrip(".c") + ".h") as f:
+    hfile = f.read()
+
+with open(os.path.join(os.path.dirname(path), "defs.h")) as f:
+    defs = f.read()
+
+cfile = re.sub(r"__spoils<[a-z0-9,]+>", "", cfile)
+# Remove insane struct names (example: $8EF4127CF77ECA3DDB612FCF233DC3A8)
+hfile = re.sub(r"\$([0-9A-F]+)", "_\\1", hfile)
+cfile = re.sub(r"\$([0-9A-F]+)", "_\\1", cfile)
+# Colons in typenames
+hfile = re.sub(r"([a-z]):([a-z])", "\\1_\\2", hfile)
+# Gotta have typedefs for all structs and enums.
+hfile = re.sub(r"(enum|struct)( __attribute__\(\(aligned\([0-9]+\)\)\))? ([a-zA-Z0-9_]+)(;?)( :[ a-zA-Z0-9_]+)?\n", "typedef \\1 \\3 \\3;\n\\1 \\3\\4\n", hfile)
+# IDA generates return structs with field names 0 and 1. We try to replace them
+# with _0 and _1.
+hfile = re.sub(r" ([0-9]+);\n", " _\\1;\n", hfile)
+cfile = re.sub(r"([a-zA-Z])\.([0-9]+)", "\\1._\\2", cfile)
+cfile = re.sub(r"v([0-9]+)\.([0-9]+)", "v\\1._\\2", cfile)
+# Remove inline assembly
+cfile = re.sub(r"\n[ \t]*__asm[ \t\n]+\{[^}]+\}", "", cfile)
+# Remove varargs
+cfile = re.sub(r"([a-zA-Z0-9_]+)\(\.\.\.\)", "\\1()", cfile)
+# Remove garbage typenames like #3125. We have to typedef them, so save them
+# first.
+hash_types = re.findall(r"#([0-9]+)", hfile)
+hfile = re.sub(r"#([0-9]+)", "_\\1", hfile)
+# Anonymous structs in typedefs have one to many semi-colons
+hfile = re.sub(r"}; ([*_a-zA-Z0-9])", "} \\1", hfile)
+# Reserved identifiers
+hfile = re.sub(r" (signed|enum|char|long|register);\n", " _\\1;\n", hfile)
+# Removed register annotation using @ on variables and functions.
+cfile = re.sub(r"@<[a-zA-Z0-9]+>", "", cfile)
+# Label right before the end of a scope is not allowed, so let's just remove
+# all labels.
+cfile = re.sub(r"\nLABEL_[0-9]+:\n", "\n", cfile)
+
+# Do #includes manually since files are in some relative directory.
+combined = (
+    """
+#define __attribute__(x)
+#define __inline
+#define __extension__
+#define __restrict
+typedef long long __m256i;
+typedef long long __m256d;
+typedef long long __m256;
+typedef long long __m128i;
+typedef long long __m128d;
+typedef long long __m128;
+typedef long long LARGE_INTEGER;
+typedef void va_list;
+typedef void wchar_t;
+typedef void HCRYPTPROV;
+typedef void CHAR;
+typedef void WCHAR;
+struct _WIN32_FIND_DATAW {int x;};
+typedef void uintptr_t;
+typedef void UINT;
+typedef void DWORD;
+typedef void WORD;
+typedef void QWORD;
+typedef void fpos_t;
+struct _RTL_CRITICAL_SECTION {int x;};
+typedef void PRTL_CRITICAL_SECTION_DEBUG;
+typedef void _UserMathErrorFunctionPointer;
+typedef void PRUNTIME_FUNCTION;
+typedef void ULONG;
+typedef void LONG;
+typedef void ULONG64;
+typedef void LONG64;
+typedef void wint_t;
+""" +
+    defs + """
+#define __ptr32
+// Assume 64 bit
+typedef unsigned long long size_t;
+typedef void PTR_pageparser_stateFunc;
+typedef void PTR_publisher_htmlCollectorStateFunc;
+""" +
+    "\n".join(f"typedef void _{t};" for t in hash_types) + "\n" +
+    hfile
+    	.replace("__golang", "")
+        .replace("::_", "___") +
+    """
+typedef void LPCRITICAL_SECTION;
+typedef void PCONTEXT;
+typedef void _PVFV;
+typedef void _crt_app_type;
+typedef void LPSTARTUPINFOA;
+typedef void LPTOP_LEVEL_EXCEPTION_FILTER;
+typedef void _CoreCrtNonSecureSearchSortCompareFunction;
+typedef void LPCCH;
+typedef void LPBOOL;
+typedef void LPSTR;
+typedef void LPWSTR;
+typedef void LPCWSTR;
+typedef void LPVOID;
+typedef void HWND;
+typedef void _TBYTE;
+typedef void PUNWIND_HISTORY_TABLE;
+struct _EXCEPTION_POINTERS {int x;};
+typedef void SIZE_T;
+typedef void LPCVOID;
+typedef void PMEMORY_BASIC_INFORMATION;
+struct _IMAGE_RUNTIME_FUNCTION_ENTRY {int x;};
+typedef void LPLONG;
+typedef void LPULONG;
+struct _SECURITY_ATTRIBUTES {int x;};
+typedef void PEXCEPTION_RECORD;
+typedef void EXCEPTION_RECORD;
+typedef void wctype_t;
+typedef void *PVOID;
+typedef void LPOVERLAPPED;
+typedef void PTIMERAPCROUTINE;
+typedef void HMODULE;
+typedef void LPCWSTR;
+typedef void LPCSTR;
+typedef void FARPROC;
+typedef unsigned short _OWORD;
+typedef void struct__sync_Once_v__ptr_x509_Certificate_;
+typedef void status_Status_0;
+#define __fastcall
+#define __cdecl
+#define __usercall
+""" +
+    cfile
+        .replace("#include <windows.h>", "")
+        .replace("#include <math.h>", "")
+        .replace("#include <defs.h>", "")
+        .replace("#error", "// error")
+        .replace("_::RTYPE", "___RTYPE")
+        .replace(".enum", "._enum")
+        .replace("__stdcall", "")
+        .replace("__golang", "")
+        # Some strange const initialization: const atomic_Uint32 off_5CF638 = { , 4306400u };
+        .replace("{ ,", "{")
+        .replace(" = ;", ";")
+)
+
+with open(sys.argv[2], "w") as f:
+    f.write(combined)
+# off_5CF638
