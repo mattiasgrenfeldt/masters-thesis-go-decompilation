@@ -13,8 +13,7 @@ from ghidra.program.model.pcode import Varnode
 from ghidra.program.model import data
 
 # load file with function signatures
-filename = os.path.dirname(__file__) + '/out.json'
-with open(filename) as fd:
+with open(askFile("Provide json file", "Choose").getPath()) as fd:
     definitions = json.load(fd)
 
 # current architecture, for architectures-specific functions
@@ -200,6 +199,48 @@ def get_type(s):
 
 struct_defs = {}
 
+RESERVED_IDENTIFIERS = set([
+    "auto",
+    "break",
+    "case",
+    "char",
+    "code",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unix",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+])
+def safe_identifier(name):
+    if name in RESERVED_IDENTIFIERS:
+        return "_" + name
+    return name
 
 # TODO ensure it works with types with looping references
 def get_struct(name):
@@ -210,7 +251,7 @@ def get_struct(name):
     struct_defs[name] = struct_t, 'x', 'y'
 
     fields = [
-        (get_type(field['DataType']), field['Name'])
+        (get_type(field['DataType']), safe_identifier(field['Name']))
         for field in prog_definitions['Structs'][name]['Fields']
     ]
 
@@ -363,7 +404,7 @@ def get_params(param_types):
         # print('storage = {}, datatype = {}, I = {}, FP = {}, stack_offset = {}'.format(storage, datatype, I, FP, stack_offset))
 
         result_params.append(ParameterImpl(
-            param['Name'],
+            safe_identifier(param['Name']),
             datatype,
             storage,
             currentProgram,

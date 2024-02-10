@@ -37,7 +37,7 @@ main() {
 	mkdir -p results
 
 	if [[ -z $tag ]]; then
-		for tag in $( git -C $go_dir tag | grep -vE '(weekly|release|beta|rc)' | sort -V | grep -A 999 go1.14 ); do
+		for tag in $( git -C $go_dir tag | grep -vE '(weekly|release|beta|rc)' | sort -V | grep -A 999 go1.17 ); do
 			build_for_tag $tag
 		done
 	else
